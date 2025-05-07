@@ -1,0 +1,321 @@
+# UEFN Verse Code Patterns Reference Guide
+# ===================================================
+# One complete .verse file of idioms encountered in real UEFN projects.
+# Copy‑paste into a module to experiment. Update module paths as needed.
+
+################################################################################
+# 2. CONDITIONALS & CASE
+################################################################################
+
+# Block‑style if / then
+if:
+    Player := player[Agent]
+    set SomeVar = OtherVar
+then:
+    Print("Block‑style succeeded")
+
+# Compact if‑else chain
+if (Score > 50):
+    Print("High score!")
+else if (Score > 25):
+    Print("Mid score")
+else:
+    Print("Low score")
+
+# Expression (ternary‑like)
+Tier := if (Shield < 50) then "Low" else "OK"
+
+# Failable binding inline
+if (FortChar := player[Agent].GetFortCharacter[]):
+    FortChar.SetHealth(100)
+
+# CASE EXPRESSIONS
+# TODO: Populate this section with `case` expression examples extracted from real .verse code repositories.
+
+################################################################################
+
+AnswerToEverything : int = 42          # constant (immutable)
+
+var Score : int = 0                    # mutable var
+var Lives : int                        # declared; value set later
+
+set Lives = 3                          # runtime assignment
+
+LevelUp := Score + 1                   # inline constant via :=
+
+# Collections
+var Fib : []int = array{1,1,2,3,5}
+Weapons : [string]item_definition = map{}
+
+################################################################################
+# 2. CONDITIONALS & CASE
+################################################################################
+
+# Block‑style if / then
+if:
+    Player := player[Agent]
+    set SomeVar = OtherVar
+then:
+    Print("Block‑style succeeded")
+
+# Compact if‑else chain
+if (Score > 50):
+    Print("High score!")
+else if (Score > 25):
+    Print("Mid score")
+else:
+    Print("Low score")
+
+# Expression (ternary‑like)
+Tier := if (Shield < 50) then "Low" else "OK"
+
+# Failable binding inline
+if (FortChar := player[Agent].GetFortCharacter[]):
+    FortChar.SetHealth(100)
+
+# -----------------------------------------------------------------------------
+# CASE EXPRESSION (examples taken verbatim from Epic documentation)
+# -----------------------------------------------------------------------------
+# Guard AI state handling:
+case(GuardStateVariable):
+    idle_state =>
+        RunIdleAnimation()
+        SearchPlayerCharacter()
+    harvest_state =>
+        GatherResources()
+    alert_state =>
+        RunAlertAnimation()
+        PlayAlertSound()
+        DisplayAlertUIElement()
+        TargetPlayerCharacter()
+    attack_state =>
+        RunAttackAnimation()
+        DisplayAttackUIElement()
+        TargetPlayerCharacter()
+        AttackPlayerCharacter()
+    _ =>
+        RunPatrolAnimation()
+        SearchPlayerCharacter()
+        SearchResources()
+
+# Breaking out of a loop when x equals 42:
+loop:
+    case (x):
+        42 => break
+        _  => {}
+
+# Returning different values in a function (long‑form):
+Foo(x : int) : int =
+    case (x):
+        100 => return 200
+        _   => return 100
+
+# Same, but using value expression form (implicit return):
+Foo(x : int) : int =
+    case (x):
+        100 => 200
+        _   => 100
+# -----------------------------------------------------------------------------
+PointsForWeapon := case(WeaponType):
+    "Rifle"    -> 30
+    "Shotgun"  -> 80
+    "Sniper"   -> 100
+    else        -> 10                 # default branch
+
+# `case` is an expression; here it returns an int assigned to PointsForWeapon.
+
+################################################################################
+# 3. LOOPS
+################################################################################
+
+loop:
+    TickUpdate()
+    if (GameOver?):
+        break
+    Sleep(0.03)
+
+for(i := 0 .. 3):
+    Print("Index {i}")
+
+for(v : Fib):
+    Print(v)
+
+for(idx -> v : Fib):
+    Print("Fib[{idx}] = {v}")
+
+for(k -> itm : Weapons):
+    Print("{k} gives {itm}")
+
+Even := for(x := 1 .. 10, x % 2 = 0): x        # => [2,4,6,8,10]
+
+# Legacy for‑do pattern
+for:
+    R := 0 .. 2
+    for(i := R): Print(i)
+do: ()
+
+################################################################################
+# 4. FUNCTIONS & SPECIFIERS
+################################################################################
+
+distance(a:float, b:float): float =
+    return Abs(a-b)
+
+Double(x:int): int = x * 2
+
+DoAsync<suspends>(): void =
+    Sleep(1.0)
+    Print("done after 1s")
+
+SafeDivide<decides>(A:int, B:int): int =
+    if (B = 0): fail
+    return A / B
+
+AddScore<transacts>(Amt:int): void =
+    set Score = Score + Amt
+
+################################################################################
+# 5. CLASSES, CLASS SPECIFIERS & METHODS
+################################################################################
+
+# Utility/singleton/abstract/computes examples
+
+GameState<singleton> := class:
+    var Started : bool = false
+
+utility_funcs<utility> := class:
+    Clamp(Value:float, Min:float, Max:float): float =
+        if (Value < Min): return Min
+        else if (Value > Max): return Max
+        else: return Value
+
+DamageDealer<abstract> := class<abstract>:
+    Deal(Target:agent, Amt:int)<abstract>: void = pass
+
+WeaponBase<abstract> := class(DamageDealer):
+    # common weapon data here
+    
+    Deal(Target:agent, Amt:int)<override>: void =
+        # basic damage implementation
+        Target.ApplyDamage(Amt)
+
+plasma_burst_laser<public> := class<computes>(WeaponBase):
+    ID<override>()<transacts>: string = "Plasma Burst Laser"
+    FireRate: float = 1.2
+
+MyDevice<public> := class(creative_device):
+    @editable
+    Spawner : player_spawner_device = player_spawner_device{}
+
+    OnBegin<override>()<suspends>: void =
+        Print("Game start")
+        Spawner.SpawnItem()
+
+################################################################################
+# 6. OPTION, FAILURE, `?`
+################################################################################
+
+if (PlayerChar := player[Agent].GetFortCharacter[]):
+    PlayerChar.SetHealth(100)
+
+Damage := player[Agent].GetDamageTaken[]
+
+################################################################################
+# 7. EVENTS & LISTENABLE
+################################################################################
+
+SomeSpawner.SpawnedEvent.Subscribe(OnSpawn)
+
+OnSpawn(NewAgent: agent): void =
+    Print("Spawned {NewAgent}")
+
+################################################################################
+# 8. CONCURRENCY & TASKS
+################################################################################
+
+async_task<suspends>(): void =
+    branch TaskA()
+    branch TaskB()
+    sync
+    Print("both tasks done")
+
+TaskA<suspends>(): void = Sleep(2.0)
+TaskB<suspends>(): void = Sleep(4.0)
+
+################################################################################
+# 9. SPAWNING OBJECTS & NPCs
+################################################################################
+
+PropArr := SpawnProp(SomeAsset, vector3{X:=0, Y:=0, Z:=200}, IdentityRotation())
+if (Prop := PropArr(0)?):
+    Prop.SetVelocity(vector3{Z:=600})
+
+################################################################################
+# 10. TEAM MANAGEMENT
+################################################################################
+
+Teams := GetPlayspace().GetTeamCollection().GetTeams()
+if (Red := Teams[0]?):
+    GetPlayspace().GetTeamCollection().AddToTeam(Agent, Red)
+
+################################################################################
+# 11. IMPORTS
+################################################################################
+
+using { /Verse.org/Simulation }
+using { /Fortnite.com/Devices }
+using { MyGame.Core.Utils }
+
+################################################################################
+# 11. UI WIDGETS (ENGINE-LEVEL ONLY)
+################################################################################
+
+# These are persistent widget variable declarations using proper type binding.
+
+MyText : text_block = text_block{
+    DefaultText := "Hello, world!",
+    FontSize := 18,
+    Color := Color.White
+}
+
+MyColorBlock : color_block = color_block{
+    DefaultColor := Color.Black
+}
+
+MyOverlay : overlay = overlay{}
+
+MySlot : overlay_slot = overlay_slot{
+    Widget := MyText,
+    HorizontalAlignment := horizontal_alignment.Center,
+    VerticalAlignment   := vertical_alignment.Center
+}
+MyOverlay.AddWidget(MySlot)
+
+# Batch overlay slot addition
+for (Slot : array{
+    overlay_slot{
+        Widget := IconBG,
+        HorizontalAlignment := horizontal_alignment.Center,
+        VerticalAlignment   := vertical_alignment.Center
+    },
+    overlay_slot{
+        Widget := MyIcon,
+        HorizontalAlignment := horizontal_alignment.Center,
+        VerticalAlignment   := vertical_alignment.Center
+    }
+}):
+    IconOverlay.AddWidget(Slot)
+
+# Stack example
+MyStack : vertical_stack = vertical_stack{}
+MyStack.AddChild(MyText)
+
+################################################################################
+# TODO: EXTENSION FUNCTION EXAMPLES
+# -----------------------------------------------------------------------------
+# Extension functions require precise Verse syntax. Awaiting confirmation of
+# preferred style before adding runnable examples.
+################################################################################
+
+# END OF FILE
+################################################################################
