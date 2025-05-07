@@ -8,7 +8,7 @@ Print statements in verse can take tokenized variables. Print("Val: {VariableNam
 You need a specific function wrapped in a Print like this: Print(ToMessageStrPlayer("My string here", Agent))
 Variables are immutable unless you declare them initially with var VariableName : type = type{} or initial value.  Then use 'set' keyword to change the value (this will be a failable expression so use if statement)
 This invocation calls a function that has the 'no_rollback' effect, which is not allowed by its context.(3512). Solution: To fix this error, you need to use the spawn keyword to create a new task when calling the Activate method which has a no_rollback effect.
-Explicit return out of a failure context is not allowed.
+Explicit return out of a failure context is not allowed. If (expressions) / then return Val1 / else return Val2 (multiline) pattern will work.
 
 Verse Syntax Notes:
 Strongly typed to minimize opportunities for uncaught errors in development or deployment and support static checking.
